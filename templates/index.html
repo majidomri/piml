@@ -1,0 +1,1101 @@
+<html>
+
+  <head>
+    <meta charset="utf-8" />
+    <link crossorigin="" href="https://fonts.gstatic.com/" rel="preconnect" />
+    <link as="style"
+      href="https://fonts.googleapis.com/css2?display=swap&amp;family=Manrope%3Awght%40400%3B500%3B700%3B800&amp;family=Noto+Sans%3Awght%40400%3B500%3B700%3B900"
+      onload="this.rel='stylesheet'" rel="stylesheet" />
+    <link crossorigin="" href="https://fonts.gstatic.com/" rel="preconnect" />
+
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet" />
+    <title>Stitch Design</title>
+    <link href="data:image/x-icon;base64," rel="icon" type="image/x-icon" />
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <style type="text/tailwindcss">
+      :root {
+          --primary-color: #4d8ee4;
+          --secondary-color: #F0F2F4;
+          --text-primary: #111417;
+          --text-secondary: #647387;
+          --accent-color: #E5E7EB;
+          --success-color: #22c55e;
+          --locked-color: #9ca3af;
+        }
+        .prompt-codeblock {
+          background-color: var(--secondary-color);
+          border: 1px solid var(--accent-color);
+          border-radius: 0.5rem;
+          padding: 0.75rem;
+          font-family: 'Courier New', Courier, monospace;
+          font-size: 0.875rem;
+          color: var(--text-primary);
+          position: relative;
+          margin-top: 0.5rem;
+        }
+        .copy-button {
+          position: absolute;
+          top: 0.5rem;
+          right: 0.5rem;
+          background-color: white;
+          border: 1px solid var(--accent-color);
+          border-radius: 0.25rem;
+          padding: 0.25rem;
+          cursor: pointer;
+          display: flex;
+          align-items: center;
+          color: var(--text-secondary);
+        }
+        .copy-button:hover {
+          background-color: var(--accent-color);
+        }
+        .prompt-builder-input {
+          border: 1px solid var(--accent-color);
+          border-radius: 0.375rem;
+          padding: 0.5rem 0.75rem;
+          font-size: 0.875rem;
+          color: var(--text-primary);
+          width: 100%;
+          background-color: white;
+        }
+        .prompt-builder-select {
+          border: 1px solid var(--accent-color);
+          border-radius: 0.375rem;
+          padding: 0.5rem 0.75rem;
+          font-size: 0.875rem;
+          color: var(--text-primary);
+          width: 100%;
+          background-color: white;
+          appearance: none;
+          background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3E%3Cpath stroke='%236B7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='M6 8l4 4 4-4'/%3E%3C/svg%3E");
+          background-position: right 0.5rem center;
+          background-repeat: no-repeat;
+          background-size: 1.5em 1.5em;
+          padding-right: 2.5rem;
+        }
+        .collapsible-header summary::-webkit-details-marker {
+          display: none;
+        }
+        .collapsible-header summary {
+          list-style: none;
+        }
+        /* Custom styles for inline prompt input fields */
+        .prompt-variable-input {
+          border: 1px solid var(--accent-color); /* Subtle border */
+          border-radius: 0.25rem; /* Slightly rounded corners */
+          padding: 0.05rem 0.3rem; /* Minimal padding to keep it compact */
+          font-family: 'Courier New', Courier, monospace; /* Match code font */
+          font-size: 0.875rem; /* Match code font size */
+          color: var(--text-primary); /* Standard text color */
+          background-color: #fff; /* White background to make it look editable */
+          margin: 0 2px; /* Tiny margin for spacing */
+          min-width: 50px; /* Prevent it from becoming too small */
+          display: inline-block; /* Behave well with surrounding text */
+          vertical-align: baseline; /* Align nicely with text */
+          line-height: normal; /* Avoid unusual line height issues */
+        }
+        .prompt-variable-input::placeholder {
+          color: var(--text-secondary); /* Lighter placeholder text */
+          opacity: 0.6;
+        }
+        .prompt-variable-input:focus {
+          border-color: var(--primary-color); /* Highlight with primary color on focus */
+          outline: none; /* Remove default browser outline */
+          box-shadow: 0 0 0 2px rgba(77, 142, 228, 0.25); /* Soft focus ring */
+        }
+      </style>
+  </head>
+
+  <body class="bg-white">
+    <div class="relative flex size-full min-h-screen flex-col justify-between group/design-root overflow-x-hidden"
+      style='font-family: Manrope, "Noto Sans", sans-serif;'>
+      <div>
+        <header class="sticky top-0 z-10 bg-white shadow-sm">
+          <div class="flex items-center p-4 pb-2 justify-between">
+            <h2
+              class="text-[var(--text-primary)] text-xl font-bold leading-tight tracking-[-0.015em] flex-1 text-left">
+              LearnHub</h2>
+            <div class="flex items-center gap-4">
+              {% if current_user.is_authenticated %}
+                <span class="text-sm text-[var(--text-secondary)]">Welcome, {{ current_user.username }}!</span>
+                <a href="{{ url_for('logout') }}" class="text-sm font-medium text-[var(--primary-color)] hover:underline">Logout</a>
+              {% else %}
+                <a href="{{ url_for('login') }}" class="text-sm font-medium text-[var(--primary-color)] hover:underline">Login</a>
+                <a href="{{ url_for('register') }}" class="text-sm font-medium bg-[var(--primary-color)] text-white px-3 py-1.5 rounded-md hover:bg-opacity-90">Register</a>
+              {% endif %}
+            </div>
+          </div>
+        </header>
+        <main>
+          {% with messages = get_flashed_messages(with_categories=true) %}
+            {% if messages %}
+              <div class="absolute top-20 right-4 z-20">
+              {% for category, message in messages %}
+                <div class="p-4 mb-2 text-sm rounded-lg shadow-lg
+                  {% if category == 'success' %}bg-green-100 text-green-800 border border-green-200
+                  {% elif category == 'danger' %}bg-red-100 text-red-800 border border-red-200
+                  {% elif category == 'warning' %}bg-yellow-100 text-yellow-800 border border-yellow-200
+                  {% else %}bg-blue-100 text-blue-800 border border-blue-200{% endif %}" role="alert">
+                  {{ message }}
+                </div>
+              {% endfor %}
+              </div>
+            {% endif %}
+          {% endwith %}
+          <div class="@container">
+            <div class="@[480px]:p-4">
+              <div
+                class="flex min-h-[50vh] flex-col gap-6 bg-cover bg-center bg-no-repeat @[480px]:gap-8 @[480px]:rounded-xl items-center justify-center p-6 text-center"
+                style='background-image: linear-gradient(rgba(0, 0, 0, 0.2) 0%, rgba(0, 0, 0, 0.5) 100%), url("https://lh3.googleusercontent.com/aida-public/AB6AXuCiVIFewyq8pGSUd8JwwD-FGtwcCNG4PqWV7X4rIR4hFrBQRSV_1leMkiatvPZc8BIY7E7PSJglS7SixCvA_p_TUVZctzC2awgEdSUbzAU3rjEAOextXjOQ-z3z342WNGXwH6ox2BvBExzL1tMq2Miy6CRABogQY_egxiDlAcqajwx-B_szviKZmhDvF0kWYwol3Abt5txpFHDTe91l17BQKsHrY-ZRR0_kZAv-yAAoMxKTid6mwC0TttVptP4K68I4Ra45rnlSKgs");'>
+                <div class="flex flex-col gap-3">
+                  <h1 class="text-white text-4xl font-extrabold leading-tight tracking-tighter @[480px]:text-5xl">
+                    Unlock Your Potential
+                  </h1>
+                  <p class="text-white text-base font-medium leading-relaxed @[480px]:text-lg">
+                    Embark on a transformative learning journey. Explore diverse courses, master essential skills, and
+                    shape a brighter future.
+                  </p>
+                </div>
+                <button
+                  class="flex min-w-[120px] max-w-[480px] cursor-pointer items-center justify-center overflow-hidden rounded-lg h-12 px-6 @[480px]:h-14 @[480px]:px-8 bg-[var(--primary-color)] text-white text-lg font-semibold leading-normal tracking-wide shadow-lg hover:bg-opacity-90 transition-colors duration-300">
+                  <span class="truncate">Start Learning</span>
+                </button>
+              </div>
+            </div>
+          </div>
+          <div class="pb-3 pt-2 sticky top-[calc(64px+8px)] bg-white z-9 shadow-sm">
+            <div class="flex border-b border-gray-200 px-4 gap-x-2 overflow-x-auto whitespace-nowrap" id="tab-bar">
+              <a class="flex flex-col items-center justify-center border-b-[3px] pb-[13px] pt-4 px-3 tab-active"
+                href="#" data-tab="Core Tools">
+                <p class="text-sm font-semibold leading-normal tracking-[0.015em]">Core Tools</p>
+              </a>
+              <a class="flex flex-col items-center justify-center border-b-[3px] border-b-transparent pb-[13px] pt-4 px-3 tab-inactive hover:text-[var(--primary-color)] transition-colors"
+                href="#" data-tab="Career Booster">
+                <p class="text-sm font-semibold leading-normal tracking-[0.015em]">Career Booster</p>
+              </a>
+              <a class="flex flex-col items-center justify-center border-b-[3px] border-b-transparent pb-[13px] pt-4 px-3 tab-inactive hover:text-[var(--primary-color)] transition-colors"
+                href="#" data-tab="AI Lab">
+                <p class="text-sm font-semibold leading-normal tracking-[0.015em]">AI Lab</p>
+              </a>
+              <a class="flex flex-col items-center justify-center border-b-[3px] border-b-transparent pb-[13px] pt-4 px-3 tab-inactive hover:text-[var(--primary-color)] transition-colors"
+                href="#" data-tab="Creative Studio">
+                <p class="text-sm font-semibold leading-normal tracking-[0.015em]">Creative Studio</p>
+              </a>
+              <a class="flex flex-col items-center justify-center border-b-[3px] border-b-transparent pb-[13px] pt-4 px-3 tab-inactive hover:text-[var(--primary-color)] transition-colors"
+                href="#" data-tab="Prompt Games">
+                <p class="text-sm font-semibold leading-normal tracking-[0.015em]">Prompt Games</p>
+              </a>
+              <a class="flex flex-col items-center justify-center border-b-[3px] border-b-transparent pb-[13px] pt-4 px-3 tab-inactive hover:text-[var(--primary-color)] transition-colors"
+                href="#" data-tab="Wellness">
+                <p class="text-sm font-semibold leading-normal tracking-[0.015em]">Wellness</p>
+              </a>
+              <a class="flex flex-col items-center justify-center border-b-[3px] border-b-transparent pb-[13px] pt-4 px-3 tab-inactive hover:text-[var(--primary-color)] transition-colors"
+                href="#" data-tab="Social Impact">
+                <p class="text-sm font-semibold leading-normal tracking-[0.015em]">Social Impact</p>
+              </a>
+            </div>
+          </div>
+          <section
+            class="p-4 text-center text-gray-600 min-h-[calc(100vh-50vh-64px-60px-80px)] flex items-center justify-center">
+            <section id="core-section">
+              <div class="p-4 space-y-6">
+                <div class="bg-white border border-[var(--accent-color)] rounded-xl shadow-md overflow-hidden">
+                  <div class="p-4">
+                    <h3 class="text-[var(--text-primary)] text-lg font-bold leading-tight mb-1">Resume Review</h3>
+                    <p class="text-[var(--text-secondary)] text-sm font-normal leading-normal mb-2">Get personalized
+                      feedback on your resume to make it stand out to potential employers.</p>
+                    <div class="prompt-codeblock">
+                      <code>Analyze my resume for clarity, impact, and ATS compatibility. Provide 3 specific suggestions for improvement.</code>
+                      <button class="copy-button" title="Copy prompt">
+                        <span class="material-icons-outlined" style="font-size: 16px;">content_copy</span>
+                      </button>
+                    </div>
+                    <p class="text-xs text-[var(--text-secondary)] mt-2"><span
+                        class="font-semibold text-[var(--text-primary)]">Learning Outcome:</span> Understand how to
+                      craft a compelling and effective resume.</p>
+                  </div>
+                </div>
+                <div class="bg-white border border-[var(--accent-color)] rounded-xl shadow-md overflow-hidden">
+                  <div class="p-4">
+                    <h3 class="text-[var(--text-primary)] text-lg font-bold leading-tight mb-1">Career Coaching</h3>
+                    <p class="text-[var(--text-secondary)] text-sm font-normal leading-normal mb-2">Connect with
+                      experienced professionals for guidance on your career path and job search strategies.</p>
+                    <div class="prompt-codeblock" data-prompt-template="What are key strategies for networking effectively in the {slot1} field?">
+                      <code>What are key strategies for networking effectively in the <input type="text" class="prompt-variable-input" data-slot="slot1" placeholder="your industry" style="width: 120px;"> field?</code>
+                      <button class="copy-button" title="Copy prompt">
+                        <span class="material-icons-outlined" style="font-size: 16px;">content_copy</span>
+                      </button>
+                    </div>
+                    <p class="text-xs text-[var(--text-secondary)] mt-2"><span
+                        class="font-semibold text-[var(--text-primary)]">Learning Outcome:</span> Develop actionable
+                      strategies for career advancement and job seeking.</p>
+                  </div>
+                </div>
+                <div class="bg-white border border-[var(--accent-color)] rounded-xl shadow-md overflow-hidden">
+                  <div class="p-4">
+                    <h3 class="text-[var(--text-primary)] text-lg font-bold leading-tight mb-1">Portfolio Builder</h3>
+                    <p class="text-[var(--text-secondary)] text-sm font-normal leading-normal mb-2">Create a
+                      professional online portfolio to showcase your skills and projects to potential clients or
+                      employers.</p>
+                    <div class="prompt-codeblock" data-prompt-template="Help me structure my portfolio. What are the essential sections for a {slot1} portfolio?">
+                      <code>Help me structure my portfolio. What are the essential sections for a <input type="text" class="prompt-variable-input" data-slot="slot1" placeholder="your role" style="width: 100px;"> portfolio?</code>
+                      <button class="copy-button" title="Copy prompt">
+                        <span class="material-icons-outlined" style="font-size: 16px;">content_copy</span>
+                      </button>
+                    </div>
+                    <p class="text-xs text-[var(--text-secondary)] mt-2"><span
+                        class="font-semibold text-[var(--text-primary)]">Learning Outcome:</span> Learn to effectively
+                      present your work and skills through a digital portfolio.</p>
+                  </div>
+                </div>
+                <div class="bg-white border border-[var(--accent-color)] rounded-xl shadow-md overflow-hidden">
+                  <div class="p-4">
+                    <h3 class="text-[var(--text-primary)] text-lg font-bold leading-tight mb-1">Networking Prompts</h3>
+                    <p class="text-[var(--text-secondary)] text-sm font-normal leading-normal mb-2">Engage in meaningful
+                      conversations with industry peers and expand your professional network.</p>
+                    <div class="prompt-codeblock">
+                      <code>Suggest 3 icebreaker questions for a virtual networking event in the tech industry.</code>
+                      <button class="copy-button" title="Copy prompt">
+                        <span class="material-icons-outlined" style="font-size: 16px;">content_copy</span>
+                      </button>
+                    </div>
+                    <p class="text-xs text-[var(--text-secondary)] mt-2"><span
+                        class="font-semibold text-[var(--text-primary)]">Learning Outcome:</span> Gain confidence and
+                      tools for effective professional networking.</p>
+                  </div>
+                </div>
+              </div>
+            </section>
+            <section id="social-impact-section" style="display:none;">
+              <main class="p-4 space-y-6">
+                <h2 class="text-[var(--text-primary)] text-2xl font-bold leading-tight tracking-tight">Prompts for
+                  Purpose-Driven Action</h2>
+                <div class="bg-[var(--secondary-color)] rounded-xl overflow-hidden shadow-md">
+                  <div class="p-5">
+                    <h3 class="text-[var(--text-primary)] text-xl font-bold mb-1">Start a Digital Movement ✊</h3>
+                    <p class="text-[var(--text-secondary)] text-sm mb-3">
+                      Use this prompt to brainstorm ideas for a social media campaign that raises awareness about a
+                      cause you care about.
+                    </p>
+                    <div class="prompt-codeblock" data-prompt-template="I want to start a digital movement to {slot1}. Help me brainstorm campaign ideas, including hashtags, content formats, and engagement strategies.">
+                      <code>I want to start a digital movement to <input type="text" class="prompt-variable-input" data-slot="slot1" placeholder="cause" style="width: 100px;">. Help me brainstorm campaign ideas, including hashtags, content formats, and engagement strategies.</code>
+                      <button class="copy-button" title="Copy prompt">
+                        <span class="material-icons-outlined" style="font-size: 16px;">content_copy</span>
+                      </button>
+                    </div>
+                    <p class="text-[var(--text-primary)] text-sm font-semibold mb-3">Learning Outcome: <span
+                        class="font-normal text-[var(--text-secondary)]">Develop a social media campaign
+                        strategy.</span></p>
+                    <button
+                      class="w-full flex items-center justify-center rounded-lg h-11 px-4 bg-[var(--primary-color)] text-white text-base font-semibold leading-normal tracking-wide hover:bg-opacity-90 transition-colors">
+                      Use This for Change
+                    </button>
+                  </div>
+                </div>
+                <div class="bg-[var(--secondary-color)] rounded-xl overflow-hidden shadow-md">
+                  <div class="p-5">
+                    <h3 class="text-[var(--text-primary)] text-xl font-bold mb-1">Mentor Generator 👩‍🏫</h3>
+                    <p class="text-[var(--text-secondary)] text-sm mb-3">Use this prompt to find a mentor who can guide
+                      you in your social impact journey.</p>
+                    <div class="prompt-codeblock" data-prompt-template="I'm looking for a mentor in the field of {slot1} who can help me with {slot2}. Can you suggest potential mentors and how to approach them?">
+                      <code>I'm looking for a mentor in the field of <input type="text" class="prompt-variable-input" data-slot="slot1" placeholder="field" style="width: 80px;"> who can help me with <input type="text" class="prompt-variable-input" data-slot="slot2" placeholder="goal" style="width: 80px;">. Can you suggest potential mentors and how to approach them?</code>
+                      <button class="copy-button" title="Copy prompt">
+                        <span class="material-icons-outlined" style="font-size: 16px;">content_copy</span>
+                      </button>
+                    </div>
+                    <p class="text-[var(--text-primary)] text-sm font-semibold mb-3">Learning Outcome: <span
+                        class="font-normal text-[var(--text-secondary)]">Identify and connect with a mentor.</span></p>
+                    <button
+                      class="w-full flex items-center justify-center rounded-lg h-11 px-4 bg-[var(--primary-color)] text-white text-base font-semibold leading-normal tracking-wide hover:bg-opacity-90 transition-colors">
+                      Use This for Change
+                    </button>
+                  </div>
+                </div>
+                <div class="bg-[var(--secondary-color)] rounded-xl overflow-hidden shadow-md">
+                  <div class="p-5">
+                    <h3 class="text-[var(--text-primary)] text-xl font-bold mb-1">Crowdfunding Toolkit 💸</h3>
+                    <p class="text-[var(--text-secondary)] text-sm mb-3">Use this prompt to create a crowdfunding
+                      campaign for your social impact project.</p>
+                    <div class="prompt-codeblock" data-prompt-template="I need to create a crowdfunding campaign for my project {slot1}. Help me write a compelling story, set a realistic goal, and plan promotion strategies.">
+                      <code>I need to create a crowdfunding campaign for my project <input type="text" class="prompt-variable-input" data-slot="slot1" placeholder="project" style="width: 100px;">. Help me write a compelling story, set a realistic goal, and plan promotion strategies.</code>
+                      <button class="copy-button" title="Copy prompt">
+                        <span class="material-icons-outlined" style="font-size: 16px;">content_copy</span>
+                      </button>
+                    </div>
+                    <p class="text-[var(--text-primary)] text-sm font-semibold mb-3">Learning Outcome: <span
+                        class="font-normal text-[var(--text-secondary)]">Plan a crowdfunding campaign.</span></p>
+                    <button
+                      class="w-full flex items-center justify-center rounded-lg h-11 px-4 bg-[var(--primary-color)] text-white text-base font-semibold leading-normal tracking-wide hover:bg-opacity-90 transition-colors">
+                      Use This for Change
+                    </button>
+                  </div>
+                </div>
+                <div class="bg-[var(--secondary-color)] rounded-xl overflow-hidden shadow-md">
+                  <div class="p-5">
+                    <h3 class="text-[var(--text-primary)] text-xl font-bold mb-1">Ethical Debate Assistant ⚖️</h3>
+                    <p class="text-[var(--text-secondary)] text-sm mb-3">Use this prompt to explore the ethical
+                      implications of a social issue.</p>
+                    <div class="prompt-codeblock" data-prompt-template="I want to understand the ethical implications of {slot1}. Help me explore different perspectives, potential consequences, and solutions.">
+                      <code>I want to understand the ethical implications of <input type="text" class="prompt-variable-input" data-slot="slot1" placeholder="issue" style="width: 120px;">. Help me explore different perspectives, potential consequences, and solutions.</code>
+                      <button class="copy-button" title="Copy prompt">
+                        <span class="material-icons-outlined" style="font-size: 16px;">content_copy</span>
+                      </button>
+                    </div>
+                    <p class="text-[var(--text-primary)] text-sm font-semibold mb-3">Learning Outcome: <span
+                        class="font-normal text-[var(--text-secondary)]">Analyze ethical dilemmas.</span></p>
+                    <button
+                      class="w-full flex items-center justify-center rounded-lg h-11 px-4 bg-[var(--primary-color)] text-white text-base font-semibold leading-normal tracking-wide hover:bg-opacity-90 transition-colors">
+                      Use This for Change
+                    </button>
+                  </div>
+                </div>
+              </main>
+            </section>
+            <section id="wellness-section" style="display:none;">
+              <div>
+                <div class="flex items-center bg-transparent p-4 pb-3">
+                  <h1
+                    class="text-[var(--text-primary)] text-xl font-bold leading-tight tracking-[-0.015em] flex-1 text-center pr-10">
+                    Wellness</h1>
+                </div>
+                <div class="px-4 py-3 space-y-6">
+                  <div class="bg-[var(--card-background)] rounded-2xl shadow-sm p-5 @container-fluid">
+                    <div class="flex flex-col gap-3">
+                      <h2 class="text-[var(--text-primary)] text-lg font-semibold leading-tight tracking-[-0.01em]">
+                        Digital Self-Care Prompter 💖</h2>
+                      <p class="text-[var(--text-secondary)] text-sm font-normal leading-normal">Use this when feeling
+                        overwhelmed.</p>
+                      <div class="bg-gray-50 p-3 rounded-lg relative group">
+                        <pre
+                          class="text-sm text-gray-700 whitespace-pre-wrap font-mono"><code>Suggest 3 simple digital detox activities I can do right now to reduce screen fatigue.</code></pre>
+                        <button
+                          class="absolute top-2 right-2 p-1.5 bg-gray-200 hover:bg-gray-300 rounded-md opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100"
+                          onclick="copyToClipboard(this)">
+                          <svg fill="currentColor" height="16px" viewBox="0 0 256 256" width="16px"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path
+                              d="M216,32H88a8,8,0,0,0-8,8V80H40a8,8,0,0,0-8,8V216a8,8,0,0,0,8,8H168a8,8,0,0,0,8-8V176h40a8,8,0,0,0,8-8V40A8,8,0,0,0,216,32ZM160,208H48V96H160Zm48-48H176V88a8,8,0,0,0-8-8H96V48H208Z">
+                            </path>
+                          </svg>
+                        </button>
+                      </div>
+                      <p class="text-[var(--text-primary)] text-sm font-bold leading-normal pt-1">Learning Outcome:
+                        <span class="font-normal text-[var(--text-secondary)]">Discover actionable steps for immediate
+                          digital wellbeing.</span>
+                      </p>
+                    </div>
+                  </div>
+                  <div class="bg-[var(--card-background)] rounded-2xl shadow-sm p-5 @container">
+                    <div class="flex flex-col gap-3">
+                      <h2 class="text-[var(--text-primary)] text-lg font-semibold leading-tight tracking-[-0.01em]">
+                        Emotion Reframer GPT 🧘</h2>
+                      <p class="text-[var(--text-secondary)] text-sm font-normal leading-normal">Use this when feeling
+                        stressed or anxious.</p>
+                      <div class="bg-gray-50 p-3 rounded-lg relative group">
+                        <pre
+                          class="text-sm text-gray-700 whitespace-pre-wrap font-mono"><code>I'm feeling anxious about an upcoming presentation. Help me reframe my negative thoughts into positive affirmations.</code></pre>
+                        <button
+                          class="absolute top-2 right-2 p-1.5 bg-gray-200 hover:bg-gray-300 rounded-md opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100"
+                          onclick="copyToClipboard(this)">
+                          <svg fill="currentColor" height="16px" viewBox="0 0 256 256" width="16px"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path
+                              d="M216,32H88a8,8,0,0,0-8,8V80H40a8,8,0,0,0-8,8V216a8,8,0,0,0,8,8H168a8,8,0,0,0,8-8V176h40a8,8,0,0,0,8-8V40A8,8,0,0,0,216,32ZM160,208H48V96H160Zm48-48H176V88a8,8,0,0,0-8-8H96V48H208Z">
+                            </path>
+                          </svg>
+                        </button>
+                      </div>
+                      <p class="text-[var(--text-primary)] text-sm font-bold leading-normal pt-1">Learning Outcome:
+                        <span class="font-normal text-[var(--text-secondary)]">Learn to transform negative emotions into
+                          constructive perspectives.</span>
+                      </p>
+                    </div>
+                  </div>
+                  <div class="bg-[var(--card-background)] rounded-2xl shadow-sm p-5 @container">
+                    <div class="flex flex-col gap-3">
+                      <h2 class="text-[var(--text-primary)] text-lg font-semibold leading-tight tracking-[-0.01em]">
+                        Daily Journal Generator 📓</h2>
+                      <p class="text-[var(--text-secondary)] text-sm font-normal leading-normal">Use this when you need
+                        inspiration for reflection.</p>
+                      <div class="bg-gray-50 p-3 rounded-lg relative group">
+                        <pre
+                          class="text-sm text-gray-700 whitespace-pre-wrap font-mono"><code>Generate three thoughtful journal prompts for today focusing on gratitude and personal growth.</code></pre>
+                        <button
+                          class="absolute top-2 right-2 p-1.5 bg-gray-200 hover:bg-gray-300 rounded-md opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100"
+                          onclick="copyToClipboard(this)">
+                          <svg fill="currentColor" height="16px" viewBox="0 0 256 256" width="16px"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path
+                              d="M216,32H88a8,8,0,0,0-8,8V80H40a8,8,0,0,0-8,8V216a8,8,0,0,0,8,8H168a8,8,0,0,0,8-8V176h40a8,8,0,0,0,8-8V40A8,8,0,0,0,216,32ZM160,208H48V96H160Zm48-48H176V88a8,8,0,0,0-8-8H96V48H208Z">
+                            </path>
+                          </svg>
+                        </button>
+                      </div>
+                      <p class="text-[var(--text-primary)] text-sm font-bold leading-normal pt-1">Learning Outcome:
+                        <span class="font-normal text-[var(--text-secondary)]">Cultivate a regular journaling habit with
+                          engaging prompts.</span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+                <div class="px-4 pt-8 pb-4 flex items-center">
+                  <div class="flex-grow h-px bg-gray-300"></div>
+                  <h2
+                    class="text-[var(--text-secondary)] text-base font-semibold leading-tight tracking-[-0.015em] px-4">
+                    Mental Clarity Tools</h2>
+                  <div class="flex-grow h-px bg-gray-300"></div>
+                </div>
+                <div class="px-4 py-3 space-y-6">
+                  <div class="bg-[var(--card-background)] rounded-2xl shadow-sm p-5 @container">
+                    <div class="flex flex-col gap-3">
+                      <h2 class="text-[var(--text-primary)] text-lg font-semibold leading-tight tracking-[-0.01em]">
+                        Mindful Moment Guide 🧘</h2>
+                      <p class="text-[var(--text-secondary)] text-sm font-normal leading-normal">Use this when feeling
+                        anxious or needing to center yourself.</p>
+                      <div class="bg-gray-50 p-3 rounded-lg relative group">
+                        <pre
+                          class="text-sm text-gray-700 whitespace-pre-wrap font-mono"><code>Guide me through a 5-minute mindfulness exercise to calm my thoughts.</code></pre>
+                        <button
+                          class="absolute top-2 right-2 p-1.5 bg-gray-200 hover:bg-gray-300 rounded-md opacity-0 group-hover:opacity-100 transition-opacity focus:opacity-100"
+                          onclick="copyToClipboard(this)">
+                          <svg fill="currentColor" height="16px" viewBox="0 0 256 256" width="16px"
+                            xmlns="http://www.w3.org/2000/svg">
+                            <path
+                              d="M216,32H88a8,8,0,0,0-8,8V80H40a8,8,0,0,0-8,8V216a8,8,0,0,0,8,8H168a8,8,0,0,0,8-8V176h40a8,8,0,0,0,8-8V40A8,8,0,0,0,216,32ZM160,208H48V96H160Zm48-48H176V88a8,8,0,0,0-8-8H96V48H208Z">
+                            </path>
+                          </svg>
+                        </button>
+                      </div>
+                      <p class="text-[var(--text-primary)] text-sm font-bold leading-normal pt-1">Learning Outcome:
+                        <span class="font-normal text-[var(--text-secondary)]">Practice mindfulness techniques for
+                          stress reduction and improved focus.</span>
+                      </p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+            <section id="prompt-games-section" style="display:none;">
+              <div class="p-4 grid gap-6">
+                <div class="prompt-card flip-card bg-[var(--card-background)] rounded-xl shadow-lg overflow-hidden">
+                  <div class="flip-card-inner">
+                    <div class="flip-card-front p-4">
+                      <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-[var(--text-primary)] text-lg font-bold leading-tight mb-1">Prompt Ninja Trials
+                          🥷</h3>
+                      </div>
+                      <p class="text-[var(--text-secondary)] text-sm mb-1">Game Instructions: Change this basic prompt
+                        in 5 rounds to achieve mastery.</p>
+                      <div class="prompt-codeblock mb-3">
+                        <code>Write a short story about a cat that dreams of flying.</code>
+                        <button class="copy-button" title="Copy prompt">
+                          <span class="material-icons-outlined" style="font-size: 16px;">content_copy</span>
+                        </button>
+                      </div>
+                      <p class="text-sm mb-2"><strong class="learning-outcome">Learning Outcome:</strong> Master
+                        iterative prompt refinement.</p>
+                      <div class="flex items-center justify-between">
+                        <div>
+                          <div class="w-full h-2.5 rounded-full progress-bar-bg mb-1">
+                            <div class="h-2.5 rounded-full progress-bar-fill" style="width: 20%;"></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="prompt-card flip-card bg-[var(--card-background)] rounded-xl shadow-lg overflow-hidden">
+                  <div class="flip-card-inner">
+                    <div class="flip-card-front p-4">
+                      <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-[var(--text-primary)] text-lg font-bold leading-tight mb-1">Mutation Lab 🧪</h3>
+                      </div>
+                      <p class="text-[var(--text-secondary)] text-sm mb-1">Game Instructions: Mutate the prompt to
+                        achieve a specific, bizarre output.</p>
+                      <div class="prompt-codeblock mb-3">
+                        <code>Describe a futuristic city where animals are architects.</code>
+                        <button class="copy-button" title="Copy prompt">
+                          <span class="material-icons-outlined" style="font-size: 16px;">content_copy</span>
+                        </button>
+                      </div>
+                      <p class="text-sm mb-2"><strong class="learning-outcome">Learning Outcome:</strong> Understand
+                        prompt sensitivity and creative exploration.</p>
+                    </div>
+                  </div>
+                </div>
+                <div class="bg-[var(--card-background)] rounded-xl shadow-lg overflow-hidden">
+                  <div class="flip-card-inner">
+                    <div class="flip-card-front p-4">
+                      <h3 class="text-[var(--text-primary)] text-lg font-bold leading-tight mb-1">Prompt Speedrun ⚡️
+                      </h3>
+                      <p class="text-[var(--text-secondary)] text-sm mb-1">Game Instructions: Generate the best output
+                        in under 60 seconds. Precision is key!</p>
+                      <div class="prompt-codeblock mb-3">
+                        <code>Create a catchy, one-sentence marketing slogan for a new eco-friendly coffee shop that emphasizes speed and quality.</code>
+                        <button class="copy-button" title="Copy prompt">
+                          <span class="material-icons-outlined" style="font-size: 16px;">content_copy</span>
+                        </button>
+                      </div>
+                      <p class="text-sm mb-2"><strong class="learning-outcome">Learning Outcome:</strong> Develop rapid
+                        prompt formulation and concise output generation.</p>
+                      <div class="flex items-center justify-between">
+                      </div>
+                    </div>
+                  </div>
+                </div>
+                <div class="bg-[var(--card-background)] rounded-xl shadow-lg overflow-hidden">
+                  <div class="flip-card-inner">
+                    <div class="flip-card-front p-4">
+                      <div class="flex items-center justify-between mb-3">
+                        <h3 class="text-[var(--text-primary)] text-lg font-bold leading-tight mb-1">Dungeon Quest 🧙
+                        </h3>
+                      </div>
+                      <p class="text-[var(--text-secondary)] text-sm mb-1">Game Instructions: Craft a series of prompts
+                        to navigate a treacherous dungeon and find the hidden treasure.</p>
+                      <div class="prompt-codeblock mb-3">
+                        <code>You enter a dark cave. Describe what you see and your first action.</code>
+                        <button class="copy-button" title="Copy prompt">
+                          <span class="material-icons-outlined" style="font-size: 16px;">content_copy</span>
+                        </button>
+                      </div>
+                      <p class="text-sm mb-2"><strong class="learning-outcome">Learning Outcome:</strong> Learn
+                        sequential prompting and context maintenance.</p>
+                      <div class="flex items-center justify-between">
+                        <div>
+                          <div class="w-full h-2.5 rounded-full progress-bar-bg mb-1">
+                            <div class="h-2.5 rounded-full bg-[var(--success-color)]" style="width: 100%;"></div>
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+            <section id="creative-studio-section" style="display:none;">
+              <div class="p-4">
+                <div class="grid grid-cols-1 @xl:grid-cols-2 gap-6">
+                  <div
+                    class="prompt-card p-5 flex flex-col gap-3 bg-[var(--card-background)] rounded-xl shadow-md overflow-hidden">
+                    <div class="flex items-center gap-3 mb-1">
+                      <span class="material-icons icon-placeholder">theater_comedy</span>
+                      <h3 class="text-[var(--text-primary)] text-lg font-bold leading-tight tracking-[-0.01em]">
+                        Storytelling &amp; Fiction Writing</h3>
+                    </div>
+                    <p class="text-[var(--text-secondary)] text-sm leading-relaxed">
+                      Craft compelling narratives with character development, plot twists, and scene descriptions.
+                    </p>
+                    <div class="prompt-codeblock">
+                      <code>Write a short story about a character who discovers a hidden portal in their backyard.</code>
+                      <button class="copy-button" title="Copy prompt">
+                        <span class="material-icons-outlined" style="font-size: 16px;">content_copy</span>
+                      </button>
+                    </div>
+                    <p class="learning-outcome text-sm font-semibold text-[var(--text-primary)]">Learning Outcome: <span
+                        class="font-normal text-[var(--text-secondary)]">Develop your narrative skills and create
+                        engaging stories.</span></p>
+                  </div>
+                  <div
+                    class="prompt-card p-5 flex flex-col gap-3 bg-[var(--card-background)] rounded-xl shadow-md overflow-hidden">
+                    <div class="flex items-center gap-3 mb-1">
+                      <span class="material-icons icon-placeholder">palette</span>
+                      <h3 class="text-[var(--text-primary)] text-lg font-bold leading-tight tracking-[-0.01em]">Visual
+                        Assets &amp; Animation</h3>
+                    </div>
+                    <p class="text-[var(--text-secondary)] text-sm leading-relaxed">
+                      Generate unique visual content with prompts for illustrations, animations, and graphic designs.
+                    </p>
+                    <div class="prompt-codeblock">
+                      <code>Create an animation of a futuristic city with flying vehicles and neon lights.</code>
+                      <button class="copy-button" title="Copy prompt">
+                        <span class="material-icons-outlined" style="font-size: 16px;">content_copy</span>
+                      </button>
+                    </div>
+                    <p class="learning-outcome text-sm font-semibold text-[var(--text-primary)]">Learning Outcome: <span
+                        class="font-normal text-[var(--text-secondary)]">Enhance your visual creativity and produce
+                        stunning graphics.</span></p>
+                  </div>
+                  <div
+                    class="prompt-card p-5 flex flex-col gap-3 bg-[var(--card-background)] rounded-xl shadow-md overflow-hidden">
+                    <div class="flex items-center gap-3 mb-1">
+                      <span class="material-icons icon-placeholder">music_note</span>
+                      <h3 class="text-[var(--text-primary)] text-lg font-bold leading-tight tracking-[-0.01em]">Music
+                        &amp; Beat Composition</h3>
+                    </div>
+                    <p class="text-[var(--text-secondary)] text-sm leading-relaxed">
+                      Compose original music with prompts for melodies, rhythms, and soundscapes.
+                    </p>
+                    <div class="prompt-codeblock">
+                      <code>Compose a melody for a cinematic scene depicting a suspenseful chase.</code>
+                      <button class="copy-button" title="Copy prompt">
+                        <span class="material-icons-outlined" style="font-size: 16px;">content_copy</span>
+                      </button>
+                    </div>
+                    <p class="learning-outcome text-sm font-semibold text-[var(--text-primary)]">Learning Outcome: <span
+                        class="font-normal text-[var(--text-secondary)]">Improve your musical composition skills and
+                        create captivating tunes.</span></p>
+                  </div>
+                  <div
+                    class="prompt-card p-5 flex flex-col gap-3 bg-[var(--card-background)] rounded-xl shadow-md overflow-hidden">
+                    <div class="flex items-center gap-3 mb-1">
+                      <span class="material-icons icon-placeholder">movie</span>
+                      <h3 class="text-[var(--text-primary)] text-lg font-bold leading-tight tracking-[-0.01em]">Film
+                        Production &amp; Editing</h3>
+                    </div>
+                    <p class="text-[var(--text-secondary)] text-sm leading-relaxed">
+                      Guide your film projects with prompts for scriptwriting, shot composition, and editing techniques.
+                    </p>
+                    <div class="prompt-codeblock">
+                      <code>Write a script for a short film about a mysterious encounter in a coffee shop.</code>
+                      <button class="copy-button" title="Copy prompt">
+                        <span class="material-icons-outlined" style="font-size: 16px;">content_copy</span>
+                      </button>
+                    </div>
+                    <p class="learning-outcome text-sm font-semibold text-[var(--text-primary)]">Learning Outcome: <span
+                        class="font-normal text-[var(--text-secondary)]">Master film production and editing techniques
+                        for professional-quality videos.</span></p>
+                  </div>
+                </div>
+              </div>
+            </section>
+            <section id="ai-lab-section" style="display:none;">
+              <div class="p-4 space-y-4">
+                <div class="bg-[var(--card-background)] rounded-xl shadow-lg p-5">
+                  <h3 class="text-[var(--text-primary)] text-lg font-bold mb-2">Chatbot Templates 🤖</h3>
+                  <p class="text-[var(--text-secondary)] text-sm mb-3">Create conversational AI assistants for various
+                    tasks.</p>
+                  <div class="prompt-codeblock mb-4">
+                    <code>Design a chatbot that answers customer service questions for an online store.</code>
+                    <button class="copy-button" title="Copy prompt">
+                      <span class="material-icons-outlined" style="font-size: 16px;">content_copy</span>
+                    </button>
+                  </div>
+                  <p class="text-sm font-semibold text-[var(--primary-color)]">Learning Outcome: <span
+                      class="font-normal text-[var(--text-primary)]">Build a functional chatbot</span></p>
+                </div>
+                <div class="bg-[var(--card-background)] rounded-xl shadow-lg p-5">
+                  <h3 class="text-[var(--text-primary)] text-lg font-bold mb-2">Automation Scripts ⚙️</h3>
+                  <p class="text-[var(--text-secondary)] text-sm mb-3">Automate repetitive tasks with AI-powered
+                    scripts.</p>
+                  <div class="prompt-codeblock mb-4">
+                    <code>Write a Python script to summarize daily news articles from three different sources.</code>
+                    <button class="copy-button" title="Copy prompt">
+                      <span class="material-icons-outlined" style="font-size: 16px;">content_copy</span>
+                    </button>
+                  </div>
+                  <p class="text-sm font-semibold text-[var(--primary-color)]">Learning Outcome: <span
+                      class="font-normal text-[var(--text-primary)]">Develop automation scripts</span></p>
+                </div>
+                <div class="bg-[var(--card-background)] rounded-xl shadow-lg p-5">
+                  <h3 class="text-[var(--text-primary)] text-lg font-bold mb-2">Data Analysis Prompts 📊</h3>
+                  <p class="text-[var(--text-secondary)] text-sm mb-3">Generate prompts for analyzing datasets and
+                    extracting insights.</p>
+                  <div class="prompt-codeblock mb-4">
+                    <code>Create a set of prompts to analyze customer sales data and identify the top 5 performing product categories.</code>
+                    <button class="copy-button" title="Copy prompt">
+                      <span class="material-icons-outlined" style="font-size: 16px;">content_copy</span>
+                    </button>
+                  </div>
+                  <p class="text-sm font-semibold text-[var(--primary-color)]">Learning Outcome: <span
+                      class="font-normal text-[var(--text-primary)]">Extract insights from data</span></p>
+                </div>
+                <div class="bg-[var(--card-background)] rounded-xl shadow-lg p-5">
+                  <h3 class="text-[var(--text-primary)] text-lg font-bold mb-2">Business Intelligence Dashboards 📈</h3>
+                  <p class="text-[var(--text-secondary)] text-sm mb-3">Design interactive dashboards for visualizing
+                    business metrics.</p>
+                  <div class="prompt-codeblock mb-4">
+                    <code>Design an interactive dashboard to track key performance indicators (KPIs) for a quarterly marketing campaign, including website traffic, conversion rates, and social media engagement.</code>
+                    <button class="copy-button" title="Copy prompt">
+                      <span class="material-icons-outlined" style="font-size: 16px;">content_copy</span>
+                    </button>
+                  </div>
+                  <p class="text-sm font-semibold text-[var(--primary-color)]">Learning Outcome: <span
+                      class="font-normal text-[var(--text-primary)]">Visualize business metrics effectively</span></p>
+                </div>
+              </div>
+            </section>
+            <section id="career-booster-section" style="display:none;">
+              <div class="p-4 space-y-6 pb-28">
+                <details
+                  class="bg-white border border-[var(--accent-color)] rounded-xl shadow-md overflow-hidden group collapsible-header"
+                  open>
+                  <summary class="p-4 cursor-pointer focus:outline-none">
+                    <div class="flex justify-between items-center">
+                      <h3 class="text-[var(--text-primary)] text-lg font-bold leading-tight">Your Progress</h3>
+                      <span class="text-sm font-semibold text-[var(--primary-color)]">Level 2: Stack Hacker</span>
+                      <span
+                        class="material-icons-outlined text-[var(--text-secondary)] group-open:rotate-180 transition-transform duration-300">expand_more</span>
+                    </div>
+                  </summary>
+                  <div class="p-4 pt-0">
+                    <div class="relative h-3 w-full bg-[var(--secondary-color)] rounded-full mb-4">
+                      <div class="absolute top-0 left-0 h-3 bg-[var(--primary-color)] rounded-full" style="width: 40%;">
+                      </div>
+                    </div>
+                    <div class="flex justify-between items-end -mx-1">
+                      <div class="flex flex-col items-center w-1/5 px-1">
+                        <div
+                          class="w-8 h-8 rounded-full bg-[var(--success-color)] flex items-center justify-center mb-1">
+                          <span class="material-icons-outlined text-white text-xl">check</span>
+                        </div>
+                        <p class="text-xs text-center font-medium text-[var(--success-color)]">Beginner</p>
+                      </div>
+                      <div class="flex flex-col items-center w-1/5 px-1">
+                        <div
+                          class="w-10 h-10 rounded-full bg-[var(--primary-color)] flex items-center justify-center mb-1 shadow-lg border-2 border-white">
+                          <span class="material-icons-outlined text-white text-2xl">code</span>
+                        </div>
+                        <p class="text-xs text-center font-semibold text-[var(--primary-color)]">Stack Hacker</p>
+                      </div>
+                      <div class="flex flex-col items-center w-1/5 px-1">
+                        <div
+                          class="w-8 h-8 rounded-full bg-[var(--locked-color)] opacity-50 flex items-center justify-center mb-1">
+                          <span class="material-icons-outlined text-white text-xl">brush</span>
+                        </div>
+                        <p class="text-xs text-center font-medium text-[var(--locked-color)] opacity-75">Creative
+                          Sorcerer</p>
+                      </div>
+                      <div class="flex flex-col items-center w-1/5 px-1">
+                        <div
+                          class="w-8 h-8 rounded-full bg-[var(--locked-color)] opacity-50 flex items-center justify-center mb-1">
+                          <span class="material-icons-outlined text-white text-xl">bolt</span>
+                        </div>
+                        <p class="text-xs text-center font-medium text-[var(--locked-color)] opacity-75">Automation
+                          Alchemist</p>
+                      </div>
+                      <div class="flex flex-col items-center w-1/5 px-1">
+                        <div
+                          class="w-8 h-8 rounded-full bg-[var(--locked-color)] opacity-50 flex items-center justify-center mb-1">
+                          <span class="material-icons-outlined text-white text-xl">emoji_objects</span>
+                        </div>
+                        <p class="text-xs text-center font-medium text-[var(--locked-color)] opacity-75">Purpose Mentor
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </details>
+                <details
+                  class="bg-white border border-[var(--accent-color)] rounded-xl shadow-md overflow-hidden group collapsible-header"
+                  open>
+                  <summary class="p-4 cursor-pointer focus:outline-none">
+                    <div class="flex justify-between items-center">
+                      <h3 class="text-[var(--text-primary)] text-lg font-bold leading-tight">Prompt Builder</h3>
+                      <span
+                        class="material-icons-outlined text-[var(--text-secondary)] group-open:rotate-180 transition-transform duration-300">expand_more</span>
+                    </div>
+                  </summary>
+                  <div class="p-4 pt-0">
+                    <div class="space-y-3">
+                      <div>
+                        <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1"
+                          for="prompt-role">Role</label>
+                        <select class="prompt-builder-select" id="prompt-role" name="prompt-role">
+                          <option value="Career Coach">Career Coach</option>
+                          <option value="Mentor">Mentor</option>
+                          <option value="Recruiter">Recruiter</option>
+                          <option value="Hiring Manager">Hiring Manager</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1"
+                          for="prompt-task">Task</label>
+                        <input class="prompt-builder-input" id="prompt-task" name="prompt-task"
+                          placeholder="e.g., review my resume" type="text">
+                      </div>
+                      <div>
+                        <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1"
+                          for="prompt-tone">Tone</label>
+                        <select class="prompt-builder-select" id="prompt-tone" name="prompt-tone">
+                          <option value="professional">Professional</option>
+                          <option value="funny">Funny</option>
+                          <option value="empathetic">Empathetic</option>
+                        </select>
+                      </div>
+                      <div>
+                        <label class="block text-sm font-medium text-[var(--text-secondary)] mb-1"
+                          for="prompt-format">Format</label>
+                        <select class="prompt-builder-select" id="prompt-format" name="prompt-format">
+                          <option value="bullet points">Bullet Points</option>
+                          <option value="a story">Story</option>
+                          <option value="a table">Table</option>
+                        </select>
+                      </div>
+                    </div>
+                    <div class="mt-4">
+                      <h4 class="text-sm font-medium text-[var(--text-secondary)] mb-1">Generated Prompt:</h4>
+                      <div class="prompt-codeblock">
+                        <code id="generated-prompt-preview">Select options to generate a prompt.</code>
+                        <button class="copy-button" id="copy-generated-prompt" title="Copy prompt">
+                          <span class="material-icons-outlined" style="font-size: 16px;">content_copy</span>
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                </details>
+                <div class="p-4 space-y-6">
+                  <div class="bg-white border border-[var(--accent-color)] rounded-xl shadow-md overflow-hidden">
+                    <div class="p-4">
+                      <h3 class="text-[var(--text-primary)] text-lg font-bold leading-tight mb-1">Resume Review</h3>
+                      <p class="text-[var(--text-secondary)] text-sm font-normal leading-normal mb-2">Get personalized
+                        feedback on your resume to make it stand out to potential employers.</p>
+                      <div class="prompt-codeblock">
+                        <code>Analyze my resume for clarity, impact, and ATS compatibility. Provide 3 specific suggestions for improvement.</code>
+                        <button class="copy-button" title="Copy prompt">
+                          <span class="material-icons-outlined" style="font-size: 16px;">content_copy</span>
+                        </button>
+                      </div>
+                      <p class="text-xs text-[var(--text-secondary)] mt-2"><span
+                          class="font-semibold text-[var(--text-primary)]">Learning Outcome:</span> Understand how to
+                        craft a compelling and effective resume.</p>
+                    </div>
+                  </div>
+                  <div class="bg-white border border-[var(--accent-color)] rounded-xl shadow-md overflow-hidden">
+                    <div class="p-4">
+                      <h3 class="text-[var(--text-primary)] text-lg font-bold leading-tight mb-1">Career Coaching</h3>
+                      <p class="text-[var(--text-secondary)] text-sm font-normal leading-normal mb-2">Connect with
+                        experienced professionals for guidance on your career path and job search strategies.</p>
+                    <div class="prompt-codeblock" data-prompt-template="What are key strategies for networking effectively in the {slot1} field?">
+                      <code>What are key strategies for networking effectively in the <input type="text" class="prompt-variable-input" data-slot="slot1" placeholder="your industry" style="width: 120px;"> field?</code>
+                        <button class="copy-button" title="Copy prompt">
+                          <span class="material-icons-outlined" style="font-size: 16px;">content_copy</span>
+                        </button>
+                      </div>
+                      <p class="text-xs text-[var(--text-secondary)] mt-2"><span
+                          class="font-semibold text-[var(--text-primary)]">Learning Outcome:</span> Develop actionable
+                        strategies for career advancement and job seeking.</p>
+                    </div>
+                  </div>
+                  <div class="bg-white border border-[var(--accent-color)] rounded-xl shadow-md overflow-hidden">
+                    <div class="p-4">
+                      <h3 class="text-[var(--text-primary)] text-lg font-bold leading-tight mb-1">Portfolio Builder</h3>
+                      <p class="text-[var(--text-secondary)] text-sm font-normal leading-normal mb-2">Create a
+                        professional online portfolio to showcase your skills and projects to potential clients or
+                        employers.</p>
+                    <div class="prompt-codeblock" data-prompt-template="Help me structure my portfolio. What are the essential sections for a {slot1} portfolio?">
+                      <code>Help me structure my portfolio. What are the essential sections for a <input type="text" class="prompt-variable-input" data-slot="slot1" placeholder="your role" style="width: 100px;"> portfolio?</code>
+                        <button class="copy-button" title="Copy prompt">
+                          <span class="material-icons-outlined" style="font-size: 16px;">content_copy</span>
+                        </button>
+                      </div>
+                      <p class="text-xs text-[var(--text-secondary)] mt-2"><span
+                          class="font-semibold text-[var(--text-primary)]">Learning Outcome:</span> Learn to effectively
+                        present your work and skills through a digital portfolio.</p>
+                    </div>
+                  </div>
+                  <div class="bg-white border border-[var(--accent-color)] rounded-xl shadow-md overflow-hidden">
+                    <div class="p-4">
+                      <h3 class="text-[var(--text-primary)] text-lg font-bold leading-tight mb-1">Networking Prompts
+                      </h3>
+                      <p class="text-[var(--text-secondary)] text-sm font-normal leading-normal mb-2">Engage in
+                        meaningful
+                        conversations with industry peers and expand your professional network.</p>
+                      <div class="prompt-codeblock">
+                        <code>Suggest 3 icebreaker questions for a virtual networking event in the tech industry.</code>
+                        <button class="copy-button" title="Copy prompt">
+                          <span class="material-icons-outlined" style="font-size: 16px;">content_copy</span>
+                        </button>
+                      </div>
+                      <p class="text-xs text-[var(--text-secondary)] mt-2"><span
+                          class="font-semibold text-[var(--text-primary)]">Learning Outcome:</span> Gain confidence and
+                        tools for effective professional networking.</p>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </section>
+          </section>
+        </main>
+      </div>
+      <footer class="sticky bottom-0 bg-white border-t border-gray-100 shadow-top z-10">
+        <div class="flex gap-2 px-4 pb-3 pt-2" id="bottom-nav">
+          <a class="flex flex-1 flex-col items-center justify-end gap-1 rounded-lg py-1 tab-active" href="#"
+            data-tab="Home">
+            <div class="flex h-7 items-center justify-center" data-icon="House" data-size="24px" data-weight="fill">
+              <svg fill="currentColor" height="24px" viewBox="0 0 256 256" width="24px"
+                xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M224,115.55V208a16,16,0,0,1-16,16H168a16,16,0,0,1-16-16V168a8,8,0,0,0-8-8H112a8,8,0,0,0-8,8v40a16,16,0,0,1-16,16H48a16,16,0,0,1-16-16V115.55a16,16,0,0,1,5.17-11.78l80-75.48.11-.11a16,16,0,0,1,21.53,0,1.14,1.14,0,0,0,.11.11l80,75.48A16,16,0,0,1,224,115.55Z">
+                </path>
+              </svg>
+            </div>
+            <p class="text-xs font-medium leading-normal tracking-[0.015em]">Home</p>
+          </a>
+          <a class="flex flex-1 flex-col items-center justify-end gap-1 rounded-lg py-1 tab-inactive" href="#"
+            data-tab="Learn">
+            <div class="flex h-7 items-center justify-center" data-icon="GraduationCap" data-size="24px"
+              data-weight="regular">
+              <svg fill="currentColor" height="24px" viewBox="0 0 256 256" width="24px"
+                xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M251.76,88.94l-120-64a8,8,0,0,0-7.52,0l-120,64a8,8,0,0,0,0,14.12L32,117.87v48.42a15.91,15.91,0,0,0,4.06,10.65C49.16,191.53,78.51,216,128,216a130,130,0,0,0,48-8.76V240a8,8,0,0,0,16,0V199.51a115.63,115.63,0,0,0,27.94-22.57A15.91,15.91,0,0,0,224,166.29V117.87l27.76-14.81a8,8,0,0,0,0-14.12ZM128,200c-43.27,0-68.72-21.14-80-33.71V126.4l76.24,40.66a8,8,0,0,0,7.52,0L176,143.47v46.34C163.4,195.69,147.52,200,128,200Zm80-33.75a97.83,97.83,0,0,1-16,14.25V134.93l16-8.53ZM188,118.94l-.22-.13-56-29.87a8,8,0,0,0-7.52,14.12L171,128l-43,22.93L25,96,128,41.07,231,96Z">
+                </path>
+              </svg>
+            </div>
+            <p class="text-xs font-medium leading-normal tracking-[0.015em]">Learn</p>
+          </a>
+          <a class="flex flex-1 flex-col items-center justify-end gap-1 rounded-lg py-1 tab-inactive" href="#"
+            data-tab="Community">
+            <div class="flex h-7 items-center justify-center" data-icon="Users" data-size="24px" data-weight="regular">
+              <svg fill="currentColor" height="24px" viewBox="0 0 256 256" width="24px"
+                xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M117.25,157.92a60,60,0,1,0-66.5,0A95.83,95.83,0,0,0,3.53,195.63a8,8,0,1,0,13.4,8.74,80,80,0,0,1,134.14,0,8,8,0,0,0,13.4-8.74A95.83,95.83,0,0,0,117.25,157.92ZM40,108a44,44,0,1,1,44,44A44.05,44.05,0,0,1,40,108Zm210.14,98.7a8,8,0,0,1-11.07-2.33A79.83,79.83,0,0,0,172,168a8,8,0,0,1,0-16,44,44,0,1,0-16.34-84.87,8,8,0,1,1-5.94-14.85,60,60,0,0,1,55.53,105.64,95.83,95.83,0,0,1,47.22,37.71A8,8,0,0,1,250.14,206.7Z">
+                </path>
+              </svg>
+            </div>
+            <p class="text-xs font-medium leading-normal tracking-[0.015em]">Community</p>
+          </a>
+          <a class="flex flex-1 flex-col items-center justify-end gap-1 rounded-lg py-1 tab-inactive" href="#"
+            data-tab="Profile">
+            <div class="flex h-7 items-center justify-center" data-icon="User" data-size="24px" data-weight="regular">
+              <svg fill="currentColor" height="24px" viewBox="0 0 256 256" width="24px"
+                xmlns="http://www.w3.org/2000/svg">
+                <path
+                  d="M230.92,212c-15.23-26.33-38.7-45.21-66.09-54.16a72,72,0,1,0-73.66,0C63.78,166.78,40.31,185.66,25.08,212a8,8,0,1,0,13.85,8c18.84-32.56,52.14-52,89.07-52s70.23,19.44,89.07,52a8,8,0,1,0,13.85-8ZM72,96a56,56,0,1,1,56,56A56.06,56.06,0,0,1,72,96Z">
+                </path>
+              </svg>
+            </div>
+            <p class="text-xs font-medium leading-normal tracking-[0.015em]">Profile</p>
+          </a>
+        </div>
+        <div class="h-safe-area-bottom bg-white"></div>
+      </footer>
+      <script>
+        // Enhanced script to copy text from code blocks, supporting variables
+        document.querySelectorAll('.copy-button').forEach(button => {
+          button.addEventListener('click', () => {
+            const codeBlockDiv = button.closest('.prompt-codeblock');
+            let textToCopy;
+
+            if (codeBlockDiv.dataset.promptTemplate) {
+              // New method: Reconstruct from template and inputs
+              textToCopy = codeBlockDiv.dataset.promptTemplate;
+              const inputs = codeBlockDiv.querySelectorAll('.prompt-variable-input');
+              inputs.forEach(input => {
+                const slot = input.dataset.slot;
+                const value = input.value || input.placeholder; // Use placeholder if input is empty
+                textToCopy = textToCopy.replace(`{${slot}}`, value);
+              });
+            } else {
+              // Old method: Copy innerText of <code> tag (for non-customizable prompts)
+              const codeElement = button.previousElementSibling; // This is the <code> element
+              textToCopy = codeElement.innerText;
+            }
+
+            navigator.clipboard.writeText(textToCopy).then(() => {
+              const originalIcon = button.innerHTML;
+              button.innerHTML = '<span class="material-icons-outlined" style="font-size: 16px;">check</span>';
+              setTimeout(() => {
+                button.innerHTML = originalIcon;
+              }, 1500);
+            }).catch(err => {
+              console.error('Failed to copy: ', err);
+            });
+          });
+        });
+
+        // Tab functionality: switch active tab on click
+        document.querySelectorAll('#tab-bar a').forEach(tab => {
+          tab.addEventListener('click', function (e) {
+            e.preventDefault();
+            document.querySelectorAll('#tab-bar a').forEach(t => {
+              t.classList.remove('tab-active');
+              t.classList.add('tab-inactive');
+            });
+            this.classList.add('tab-active');
+            this.classList.remove('tab-inactive');
+            // Show/hide tab content
+            const tabMap = {
+              'Core Tools': 'core-section',
+              'Social Impact': 'social-impact-section',
+              'Wellness': 'wellness-section',
+              'Prompt Games': 'prompt-games-section',
+              'Creative Studio': 'creative-studio-section',
+              'AI Lab': 'ai-lab-section',
+              'Career Booster': 'career-booster-section'
+            };
+            Object.entries(tabMap).forEach(([tabName, sectionId]) => {
+              const section = document.getElementById(sectionId);
+              if (section) section.style.display = (this.dataset.tab === tabName) ? '' : 'none';
+            });
+            // Hide all other sections if not mapped
+            if (!tabMap[this.dataset.tab]) {
+              Object.values(tabMap).forEach(sectionId => {
+                const section = document.getElementById(sectionId);
+                if (section) section.style.display = 'none';
+              });
+            }
+          });
+        });
+      </script>
+      <script>
+        // Simple script to copy text from code blocks
+        document.querySelectorAll('.copy-button').forEach(button => {
+          button.addEventListener('click', (event) => {
+            event.stopPropagation(); // Prevent details from toggling
+            const codeElement = button.previousElementSibling;
+            const textToCopy = codeElement.innerText;
+            navigator.clipboard.writeText(textToCopy).then(() => {
+              const originalIcon = button.innerHTML;
+              button.innerHTML = '<span class="material-icons-outlined" style="font-size: 16px;">check</span>';
+              setTimeout(() => {
+                button.innerHTML = originalIcon;
+              }, 1500);
+            }).catch(err => {
+              console.error('Failed to copy: ', err);
+            });
+          });
+        });
+        // Prompt Builder Script
+        const roleSelect = document.getElementById('prompt-role');
+        const taskInput = document.getElementById('prompt-task');
+        const toneSelect = document.getElementById('prompt-tone');
+        const formatSelect = document.getElementById('prompt-format');
+        const promptPreview = document.getElementById('generated-prompt-preview');
+        const copyGeneratedPromptButton = document.getElementById('copy-generated-prompt');
+        function updatePromptPreview() {
+          const role = roleSelect.value;
+          const task = taskInput.value.trim();
+          const tone = toneSelect.value;
+          const format = formatSelect.value;
+          if (role && task && tone && format) {
+            promptPreview.textContent = `As a ${role}, ${task} in a ${tone} tone, formatted as ${format}.`;
+          } else {
+            promptPreview.textContent = 'Select options to generate a prompt.';
+          }
+        }
+        if (roleSelect && taskInput && toneSelect && formatSelect && promptPreview) {
+          roleSelect.addEventListener('change', updatePromptPreview);
+          taskInput.addEventListener('input', updatePromptPreview);
+          toneSelect.addEventListener('change', updatePromptPreview);
+          formatSelect.addEventListener('change', updatePromptPreview);
+          // Initialize preview
+          updatePromptPreview();
+        }
+        // Scroll to top button visibility
+        const scrollToTopBtn = document.getElementById('scrollToTopBtn');
+        window.addEventListener('scroll', () => {
+          if (window.scrollY > 200) {
+            scrollToTopBtn.classList.remove('opacity-0', 'pointer-events-none');
+            scrollToTopBtn.classList.add('opacity-100');
+          } else {
+            scrollToTopBtn.classList.add('opacity-0', 'pointer-events-none');
+            scrollToTopBtn.classList.remove('opacity-100');
+          }
+        });
+        // Ensure details elements don't close when interacting with internal buttons
+        document.querySelectorAll('details button').forEach(button => {
+          button.addEventListener('click', (event) => {
+            event.stopPropagation();
+          });
+        });
+        document.querySelectorAll('details select, details input').forEach(inputElement => {
+          inputElement.addEventListener('click', (event) => {
+            event.stopPropagation();
+          });
+        });
+      </script>
+    </div>
+  </body>
+
+</html>
