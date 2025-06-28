@@ -3,6 +3,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
 from flask_wtf import FlaskForm
+from flask_wtf.csrf import CSRFProtect # Import CSRFProtect
 # from wtforms import StringField, PasswordField, SubmitField # Keep this line if RegistrationForm is defined before LoginForm
 from wtforms.validators import DataRequired, Length, EqualTo, ValidationError
 import os
@@ -12,6 +13,7 @@ app = Flask(__name__)
 app.config['SECRET_KEY'] = os.urandom(24) # Important for session management
 app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///db.sqlite'
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+csrf = CSRFProtect(app) # Initialize CSRF Protection
 
 # Initialize extensions
 db = SQLAlchemy(app)
