@@ -1,4 +1,4 @@
-from flask import Flask, render_template, redirect, url_for, flash, request
+from flask import Flask, render_template, redirect, url_for, flash, request, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_login import LoginManager, UserMixin, login_user, login_required, logout_user, current_user
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -30,6 +30,48 @@ class User(UserMixin, db.Model):
 
     def check_password(self, password):
         return check_password_hash(self.password_hash, password)
+
+import json # For storing variable_values
+from datetime import datetime # For created_at timestamp
+
+class SavedPrompt(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    base_prompt_template = db.Column(db.Text, nullable=False)
+    custom_name = db.Column(db.String(150), nullable=True)
+    variable_values = db.Column(db.Text, nullable=False) # Store as JSON string
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    user = db.relationship('User', backref=db.backref('saved_prompts', lazy='dynamic')) # Changed to lazy='dynamic'
+
+    def __repr__(self):
+        return f"<SavedPrompt {self.id} by User {self.user_id} - Name: {self.custom_name or 'Untitled'}>"
+
+    def get_variable_values_dict(self):
+        """Returns the variable_values as a Python dictionary."""
+        return json.loads(self.variable_values)
+
+    def set_variable_values_dict(self, values_dict):
+        """Sets the variable_values from a Python dictionary."""
+        self.variable_values = json.dumps(values_dict)
+
+class UserVariableSet(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    set_name = db.Column(db.String(100), nullable=False)
+    variable_values = db.Column(db.Text, nullable=False)  # Store as JSON string: {"slot_name": "value", ...}
+    created_at = db.Column(db.DateTime, nullable=False, default=datetime.utcnow)
+
+    user = db.relationship('User', backref=db.backref('variable_sets', lazy='dynamic'))
+
+    def __repr__(self):
+        return f"<UserVariableSet {self.id} '{self.set_name}' by User {self.user_id}>"
+
+    def get_variables_dict(self):
+        return json.loads(self.variable_values)
+
+    def set_variables_dict(self, variables_dict):
+        self.variable_values = json.dumps(variables_dict)
 
 @login_manager.user_loader
 def load_user(user_id):
@@ -97,6 +139,88 @@ def logout():
     logout_user()
     flash('You have been logged out.', 'success')
     return redirect(url_for('login'))
+
+@app.route('/profile')
+@login_required
+def profile():
+    user_saved_prompts = SavedPrompt.query.filter_by(user_id=current_user.id).order_by(SavedPrompt.created_at.desc()).all()
+    user_variable_sets = UserVariableSet.query.filter_by(user_id=current_user.id).order_by(UserVariableSet.set_name).all()
+    return render_template('profile.html', user=current_user, saved_prompts=user_saved_prompts, variable_sets=user_variable_sets)
+
+@app.route('/api/save_prompt', methods=['POST'])
+@login_required
+def api_save_prompt():
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Invalid data"}), 400
+
+    base_prompt_template = data.get('base_prompt_template')
+    variable_values_dict = data.get('variable_values')
+    custom_name = data.get('custom_name')
+
+    if not base_prompt_template or variable_values_dict is None: # variable_values can be an empty dict
+        return jsonify({"error": "Missing required fields"}), 400
+
+    try:
+        saved_prompt = SavedPrompt(
+            user_id=current_user.id,
+            base_prompt_template=base_prompt_template,
+            custom_name=custom_name
+        )
+        saved_prompt.set_variable_values_dict(variable_values_dict) # Use helper to store as JSON
+        db.session.add(saved_prompt)
+        db.session.commit()
+        return jsonify({"success": True, "message": "Prompt saved!", "prompt_id": saved_prompt.id}), 201
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f"Error saving prompt: {e}")
+        return jsonify({"error": "Could not save prompt due to an internal error."}), 500
+
+@app.route('/api/save_variable_set', methods=['POST'])
+@login_required
+def api_save_variable_set():
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "Invalid data"}), 400
+
+    set_name = data.get('set_name')
+    variable_values_dict = data.get('variable_values')
+
+    if not set_name or not variable_values_dict: # variable_values_dict should not be empty
+        return jsonify({"error": "Missing set_name or variable_values"}), 400
+
+    if not isinstance(variable_values_dict, dict) or not variable_values_dict:
+        return jsonify({"error": "variable_values must be a non-empty dictionary"}), 400
+
+    try:
+        variable_set = UserVariableSet(
+            user_id=current_user.id,
+            set_name=set_name
+        )
+        variable_set.set_variables_dict(variable_values_dict)
+        db.session.add(variable_set)
+        db.session.commit()
+        return jsonify({"success": True, "message": "Variable set saved!", "set_id": variable_set.id}), 201
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f"Error saving variable set: {e}")
+        return jsonify({"error": "Could not save variable set due to an internal error."}), 500
+
+@app.route('/api/delete_variable_set/<int:set_id>', methods=['POST']) # Using POST for simplicity, could be DELETE
+@login_required
+def api_delete_variable_set(set_id):
+    variable_set = UserVariableSet.query.get_or_404(set_id)
+    if variable_set.user_id != current_user.id:
+        return jsonify({"error": "Unauthorized"}), 403 # Forbidden
+
+    try:
+        db.session.delete(variable_set)
+        db.session.commit()
+        return jsonify({"success": True, "message": "Variable set deleted."}), 200
+    except Exception as e:
+        db.session.rollback()
+        app.logger.error(f"Error deleting variable set {set_id}: {e}")
+        return jsonify({"error": "Could not delete variable set due to an internal error."}), 500
 
 @app.route('/hello')
 def hello():

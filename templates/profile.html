@@ -1,0 +1,250 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="utf-8" />
+    <link crossorigin="" href="https://fonts.gstatic.com/" rel="preconnect" />
+    <link as="style"
+        href="https://fonts.googleapis.com/css2?display=swap&amp;family=Manrope%3Awght%40400%3B500%3B700%3B800&amp;family=Noto+Sans%3Awght%40400%3B500%3B700%3B900"
+        onload="this.rel='stylesheet'" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons+Outlined" rel="stylesheet" />
+    <title>Your Profile - LearnHub</title>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <style type="text/tailwindcss">
+        :root {
+            --primary-color: #4d8ee4;
+            --secondary-color: #F0F2F4;
+            --text-primary: #111417;
+            --text-secondary: #647387;
+            --accent-color: #E5E7EB;
+            --success-color: #22c55e;
+            --locked-color: #9ca3af;
+        }
+        body {
+            font-family: Manrope, "Noto Sans", sans-serif;
+        }
+        /* Add any page-specific styles here if needed, or reuse from index.html if a base.html is not used */
+    </style>
+</head>
+
+<body class="bg-gray-50">
+    <div class="relative flex size-full min-h-screen flex-col justify-between group/design-root overflow-x-hidden">
+        <div>
+            <header class="sticky top-0 z-10 bg-white shadow-sm">
+                <div class="flex items-center p-4 pb-2 justify-between max-w-6xl mx-auto">
+                    <a href="{{ url_for('index') }}" class="text-[var(--text-primary)] text-xl font-bold leading-tight tracking-[-0.015em] flex-1 text-left">
+                        LearnHub
+                    </a>
+                    <div class="flex items-center gap-4">
+                        {% if current_user.is_authenticated %}
+                        <span class="text-sm text-[var(--text-secondary)]">Welcome, {{ current_user.username }}!</span>
+                        <a href="{{ url_for('profile') }}" class="text-sm font-medium text-[var(--primary-color)] hover:underline">Profile</a>
+                        <a href="{{ url_for('logout') }}" class="text-sm font-medium text-gray-600 hover:text-[var(--primary-color)]">Logout</a>
+                        {% else %}
+                        <a href="{{ url_for('login') }}" class="text-sm font-medium text-[var(--primary-color)] hover:underline">Login</a>
+                        <a href="{{ url_for('register') }}"
+                            class="text-sm font-medium bg-[var(--primary-color)] text-white px-3 py-1.5 rounded-md hover:bg-opacity-90">Register</a>
+                        {% endif %}
+                    </div>
+                </div>
+            </header>
+
+            <main class="py-8 px-4 max-w-4xl mx-auto">
+                <h1 class="text-3xl font-bold text-[var(--text-primary)] mb-8 text-center">Your Profile</h1>
+
+                <!-- Account Details Section -->
+                <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+                    <h2 class="text-xl font-semibold text-[var(--text-primary)] mb-4">Account Details</h2>
+                    <div class="space-y-2">
+                        <p class="text-md text-[var(--text-secondary)]">
+                            <span class="font-medium text-[var(--text-primary)]">Username:</span> {{ current_user.username }}
+                        </p>
+                        <!-- Future: Add email, change password link etc. -->
+                         <p class="text-sm text-gray-500 italic mt-2"> (More account management features coming soon)</p>
+                    </div>
+                </div>
+
+                <!-- My Saved Prompts Section -->
+                <div class="bg-white p-6 rounded-lg shadow-md mb-8">
+                    <h2 class="text-xl font-semibold text-[var(--text-primary)] mb-4">My Saved Prompts</h2>
+                    {% if saved_prompts %}
+                        <div class="space-y-4">
+                            {% for prompt_item in saved_prompts %}
+                                <div class="border border-[var(--accent-color)] rounded-md p-4 bg-gray-50">
+                                    <h3 class="text-lg font-medium text-[var(--text-primary)] mb-1">
+                                        {{ prompt_item.custom_name or 'Untitled Saved Prompt' }}
+                                    </h3>
+                                    <p class="text-xs text-gray-500 mb-2">Saved: {{ prompt_item.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+
+                                    <div class="prompt-codeblock mb-2" data-prompt-template="{{ prompt_item.base_prompt_template }}" data-variables="{{ prompt_item.variable_values }}">
+                                        <code class="text-sm">
+                                            <!-- JS will reconstruct this -->
+                                            Loading prompt...
+                                        </code>
+                                        <button class="copy-saved-prompt-button" title="Copy prompt" style="position: absolute; top: 0.5rem; right: 0.5rem; background-color: white; border: 1px solid var(--accent-color); border-radius: 0.25rem; padding: 0.25rem; cursor: pointer; display: flex; align-items: center; color: var(--text-secondary);">
+                                            <span class="material-icons-outlined" style="font-size: 16px;">content_copy</span>
+                                        </button>
+                                    </div>
+                                    <!--
+                                    <p class="text-sm text-[var(--text-secondary)] mt-1">
+                                        <span class="font-semibold">Base Template:</span> {{ prompt_item.base_prompt_template }}
+                                    </p>
+                                    <p class="text-sm text-[var(--text-secondary)]">
+                                        <span class="font-semibold">Variables:</span> {{ prompt_item.variable_values }}
+                                    </p>
+                                    -->
+                                    <!-- Future: Add Delete/Edit buttons -->
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-[var(--text-secondary)]">
+                            You haven't saved any prompts yet. Go to the main page to customize and save some prompts!
+                        </p>
+                    {% endif %}
+                </div>
+
+                <!-- My Saved Variable Sets Section -->
+                <div class="bg-white p-6 rounded-lg shadow-md" id="my-saved-variable-sets-container">
+                    <h2 class="text-xl font-semibold text-[var(--text-primary)] mb-4">My Saved Variable Sets</h2>
+                    {% if variable_sets %}
+                        <div class="space-y-4">
+                            {% for var_set in variable_sets %}
+                                <div class="border border-[var(--accent-color)] rounded-md p-4 bg-gray-50">
+                                    <div class="flex justify-between items-start">
+                                        <div>
+                                            <h3 class="text-lg font-medium text-[var(--text-primary)] mb-1">
+                                                {{ var_set.set_name }}
+                                            </h3>
+                                            <p class="text-xs text-gray-500 mb-2">Created: {{ var_set.created_at.strftime('%Y-%m-%d %H:%M') }}</p>
+                                        </div>
+                                        <button class="delete-variable-set-button text-red-500 hover:text-red-700" data-set-id="{{ var_set.id }}" title="Delete set">
+                                            <span class="material-icons-outlined">delete_outline</span>
+                                        </button>
+                                    </div>
+                                    <div class="text-sm text-[var(--text-secondary)] mt-1">
+                                        <p class="font-semibold mb-1">Variables:</p>
+                                        <ul class="list-disc list-inside pl-2 space-y-1">
+                                            {% for key, value in var_set.get_variables_dict().items() %}
+                                                <li><span class="font-medium text-gray-700">{{ key }}:</span> {{ value }}</li>
+                                            {% endfor %}
+                                        </ul>
+                                    </div>
+                                </div>
+                            {% endfor %}
+                        </div>
+                    {% else %}
+                        <p class="text-[var(--text-secondary)]" id="no-variable-sets-message">
+                            You haven't saved any variable sets yet. Try saving some variables from the main page!
+                        </p>
+                    {% endif %}
+                </div>
+            </main>
+        </div>
+
+        <footer class="bg-white border-t border-gray-100 mt-12">
+            <div class="max-w-6xl mx-auto py-6 px-4 text-center text-sm text-[var(--text-secondary)]">
+                &copy; 2024 LearnHub. All rights reserved. <!-- Placeholder year -->
+            </div>
+        </footer>
+    </div>
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Reconstruct and display saved prompts
+    document.querySelectorAll('.prompt-codeblock[data-prompt-template][data-variables]').forEach(codeBlockDiv => {
+        let template = codeBlockDiv.dataset.promptTemplate;
+        const variables = JSON.parse(codeBlockDiv.dataset.variables); // Variables stored as JSON string
+        let reconstructedPromptHtml = template;
+
+        for (const slot in variables) {
+            const value = variables[slot];
+            // Create a simple representation for the display, not actual input fields here
+            const variableHtml = `<span class="font-semibold text-[var(--primary-color)]">${value}</span>`;
+            reconstructedPromptHtml = reconstructedPromptHtml.replace(`{${slot}}`, variableHtml);
+        }
+        const codeElement = codeBlockDiv.querySelector('code');
+        if (codeElement) {
+            codeElement.innerHTML = reconstructedPromptHtml;
+        }
+    });
+
+    // Handle copying for saved prompts
+    document.querySelectorAll('.copy-saved-prompt-button').forEach(button => {
+        button.addEventListener('click', () => {
+            const codeBlockDiv = button.closest('.prompt-codeblock');
+            if (!codeBlockDiv || !codeBlockDiv.dataset.promptTemplate || !codeBlockDiv.dataset.variables) {
+                alert('Could not find prompt data to copy.');
+                return;
+            }
+
+            let textToCopy = codeBlockDiv.dataset.promptTemplate;
+            const variables = JSON.parse(codeBlockDiv.dataset.variables);
+
+            for (const slot in variables) {
+                textToCopy = textToCopy.replace(`{${slot}}`, variables[slot]);
+            }
+
+            navigator.clipboard.writeText(textToCopy).then(() => {
+                const originalIcon = button.innerHTML;
+                button.innerHTML = '<span class="material-icons-outlined" style="font-size: 16px;">check</span>';
+                setTimeout(() => {
+                    button.innerHTML = originalIcon;
+                }, 1500);
+            }).catch(err => {
+                console.error('Failed to copy saved prompt: ', err);
+                alert('Failed to copy prompt.');
+            });
+        });
+    });
+
+    // Handle deleting variable sets
+    document.querySelectorAll('.delete-variable-set-button').forEach(button => {
+        button.addEventListener('click', async (event) => {
+            const setId = event.currentTarget.dataset.setId;
+            if (!setId) {
+                alert('Could not find set ID to delete.');
+                return;
+            }
+
+            if (!window.confirm('Are you sure you want to delete this variable set? This action cannot be undone.')) {
+                return;
+            }
+
+            try {
+                const response = await fetch(`/api/delete_variable_set/${setId}`, {
+                    method: 'POST', // Or 'DELETE' if backend route is changed
+                    headers: {
+                        'Content-Type': 'application/json',
+                        // Add CSRF token if needed, similar to save_prompt
+                    }
+                });
+
+                const result = await response.json();
+
+                if (response.ok) {
+                    alert(result.message || 'Variable set deleted successfully!');
+                    // Remove the deleted set's card from the DOM
+                    const cardToRemove = button.closest('.border.border-\\[var\\(--accent-color\\)\\]'); // Find parent card
+                    if (cardToRemove) {
+                        cardToRemove.remove();
+                    }
+                    // Optionally, check if no sets are left and display the "You haven't saved..." message
+                    const setsContainer = document.querySelector('#my-saved-variable-sets-container .space-y-4'); // Assuming a container for the sets
+                    if (setsContainer && setsContainer.children.length === 0) {
+                        const noSetsMessage = document.querySelector('#no-variable-sets-message'); // Assuming a placeholder message element
+                        if(noSetsMessage) noSetsMessage.style.display = 'block';
+                    }
+
+                } else {
+                    alert(`Error: ${result.error || 'Could not delete variable set.'}`);
+                }
+            } catch (error) {
+                console.error('Error deleting variable set:', error);
+                alert('An error occurred while trying to delete the variable set. Check console.');
+            }
+        });
+    });
+});
+</script>
+</body>
+</html>
